@@ -10,7 +10,7 @@ Visual Analysis: Automatically plots Time Domain waveforms and Frequency Domain 
 
 Audio Cropping: Precise cutting of WAV files by start/stop seconds.
 
-Format Support: Handles Mono and Stereo WAV files.
+Format Support: Handles Mono and Stereo WAV files. (To do)
 
 ## Installation
 
