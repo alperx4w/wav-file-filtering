@@ -33,20 +33,16 @@ python audio_filtering.py <input_file> <order> <cutoff_freq> <filter_type> [opti
 
 ##### Examples:
 
-**Lowpass filter at 1000Hz (Order 4)**
-
+**Lowpass filter at 1000Hz (Order 4)**\n
 python audio_filtering.py recording.wav 4 1000 lowpass
 
-**Highpass filter at 500Hz**
-
+**Highpass filter at 500Hz**\n
 python audio_filtering.py recording.wav 4 500 highpass
 
-**Bandpass filter between 400Hz and 800Hz**
-
+**Bandpass filter between 400Hz and 800Hz**\n
 python audio_filtering.py recording.wav 4 400 800 bandpass
 
-**Bandstop filter between 45Hz and 55Hz**
-
+**Bandstop filter between 45Hz and 55Hz**\n
 python audio_filtering.py recording.wav 4 45 55 bandstop
 
 
