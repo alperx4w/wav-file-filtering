@@ -1,0 +1,5 @@
+audio_filtering/
+__pycache__/
+*.wav
+.vscode/
+
