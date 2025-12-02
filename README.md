@@ -34,15 +34,19 @@ python audio_filtering.py <input_file> <order> <cutoff_freq> <filter_type> [opti
 ##### Examples:
 
 **Lowpass filter at 1000Hz (Order 4)**
+
 python audio_filtering.py recording.wav 4 1000 lowpass
 
 **Highpass filter at 500Hz**
+
 python audio_filtering.py recording.wav 4 500 highpass
 
 **Bandpass filter between 400Hz and 800Hz**
+
 python audio_filtering.py recording.wav 4 400 800 bandpass
 
-**Bandstop (Notch) filter to remove 50Hz hum**
+**Bandstop filter between 45Hz and 55Hz**
+
 python audio_filtering.py recording.wav 4 45 55 bandstop
 
 
@@ -66,6 +70,7 @@ python wav_cropper.py <input> <output> --start <seconds> --stop <seconds>
 #### Example:
 
 **Crop from 5.5 seconds to 10 seconds**
+
 python wav_cropper.py long_recording.wav snippet.wav --start 5.5 --stop 10
 
 
