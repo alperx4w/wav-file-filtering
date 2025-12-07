@@ -8,14 +8,14 @@ from audio_filtering import *
 # length = data.shape[0]/samplerate
 # time = np.linspace(0., length, data.shape[0])
 
-order = 10  
+order = 50
 cutt_freq = 100
 
 time_limit= 1
 rate = 1000
 
 t = np.linspace(0, time_limit, rate*time_limit,False)
-wave = np.sin(90*2*np.pi*t) + np.sin(120*2*np.pi*t)
+wave = np.sin(90*2*np.pi*t) + 5*np.sin(120*2*np.pi*t)
 xf,yf = fft(wave,rate)
 
 sos = scipy.signal.butter(order, cutt_freq, 'lowpass', fs=rate, output='sos')

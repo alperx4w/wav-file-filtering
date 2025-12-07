@@ -2,9 +2,7 @@ import scipy
 from scipy.io import wavfile
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
 import argparse
-
 
 def fft(signal,rate):
     n = len(signal)
@@ -12,10 +10,8 @@ def fft(signal,rate):
     xf = scipy.fft.rfftfreq(n,1/rate)
     return xf, yf
 
-
-def audio_filter(input_file,order,cutt_freq,filter_type = "lowpass",save_audio = True,plot_result=True,channel=0,output_file = ""):
+def audio_filter(input_file,order,cutt_freq,filter_type = "lowpass",save_audio = True,plot_result=True,output_file = ""):
     try:
-
         if filter_type not in ["lowpass","highpass","bandpass","bandstop"]:
             print(f"filter type {filter_type} is not supported")
             return
@@ -30,11 +26,14 @@ def audio_filter(input_file,order,cutt_freq,filter_type = "lowpass",save_audio =
             return
 
         samplerate, wav_data = wavfile.read(input_file)
-        number_of_channels = wav_data.shape[1]
+        number_of_channels = len(wav_data.shape)
+        print(number_of_channels)
 
-        if channel > number_of_channels-1 or channel < 0:
-            print("Channel out of range")
-            return
+        if number_of_channels == 2:
+            streo = 1
+        else: 
+            streo = 0
+
         for f in cutt_freq:
             if f >= samplerate/2:
                 print(f"Error: Frequency {f} Hz is too high. Max allowed is {samplerate/2-1} Hz.")
@@ -44,13 +43,18 @@ def audio_filter(input_file,order,cutt_freq,filter_type = "lowpass",save_audio =
                 return
 
         if len(cutt_freq) == 1:
+            if cutt_freq[0] < 0:
+                print("Cutoff frequency cannot be negative")
+                return
             final_cutt = cutt_freq[0]
         else:
+            if(cutt_freq[0] < 0 or cutt_freq[1] < 0 ):
+                print("Cutoff frequency cannot be negative")
+                return
             final_cutt = cutt_freq
 
         length = wav_data.shape[0]/samplerate
         time = np.linspace(0., length, wav_data.shape[0])
-
 
         print(f"Number of channels: {number_of_channels}")
         print(f"Sample Rate: {samplerate} Hz")
@@ -58,68 +62,144 @@ def audio_filter(input_file,order,cutt_freq,filter_type = "lowpass",save_audio =
         print(f"Max Cutoff freq: {samplerate/2}")
         print(f"Audio length: {length} seconds")
 
-        ndata = wav_data[:,0] / np.max(np.abs(wav_data[:,channel]))
-        data = (ndata * 32767).astype(np.int16)
-
         sos = scipy.signal.butter(order, final_cutt, filter_type, fs=samplerate, output='sos')
-        filtered = scipy.signal.sosfilt(sos, data)
+        if streo:
+            print("Streo")
+            ndata = {}
+            data = {}
+            filtered = {}
+            normalized = {}
+            filtered_audio = {}
+            data_xfft = {}
+            data_yfft = {}
+            filtered_xfft = {}
+            filtered_yfft = {}
+            for i in range(2):
+                ndata[i] = wav_data[:,i] / np.max(np.abs(wav_data[:,i]))
+                data[i] = (ndata[i] * 32767).astype(np.int16)
 
-        normalized = filtered / np.max(np.abs(filtered))
-        filtered_audio = (normalized * 32767).astype(np.int16)
+                filtered[i] = scipy.signal.sosfilt(sos, data[i])
 
-        data_xfft, data_yfft = fft(data,samplerate)
-        filtered_xfft, filtered_yfft = fft(filtered_audio,samplerate)
+                normalized[i] = filtered[i] / np.max(np.abs(filtered[i]))
+                filtered_audio[i] = (normalized[i] * 32767).astype(np.int16)
 
-        if (plot_result == True):
-            plt.figure("Audio Lowpass Filter",figsize=(15, 10))
-            #raw audio
-            # plt.subplot(2,1,1)
-            plt.subplot(2,2,1)
-            plt.grid(True)
-            plt.plot(time,data,label = "Raw data")
-            plt.legend()
-            plt.xlabel("Time [s]")
-            plt.ylabel("Amplitude")
-            #filtered audio
-            plt.subplot(2,2,3)
-            plt.grid(True)
-            plt.plot(time,filtered_audio,label = "Saved Audio")
-            plt.xlabel("Time [s]")
-            plt.ylabel("Amplitude")
-            plt.legend()
+                data_xfft[i], data_yfft[i] = fft(data[i],samplerate)
+                filtered_xfft[i], filtered_yfft[i] = fft(filtered_audio[i],samplerate)
 
-
-            #fft raw
-            # plt.subplot(2,1,2)
-            plt.subplot(2,2,2)
-            plt.grid(True)
-            plt.plot(data_xfft,data_yfft,label = "FFT Raw data",color = 'green')
-            plt.xlabel("Frequency [Hz]")
-            plt.ylabel("Amplitude")
-            for f in cutt_freq:
-                plt.axvline(f, color='red', linestyle='--', label=f"Cutoff {f}Hz")
-            plt.legend()
-
-            #fft filtered audio
-            plt.subplot(2,2,4)
-            plt.grid(True)
-            plt.plot(filtered_xfft,filtered_yfft,label = "FFT Filtered data",color ='green')
-            plt.xlabel("Frequency [Hz]")
-            plt.ylabel("Amplitude")
-            for f in cutt_freq:
-                plt.axvline(f, color='red', linestyle='--', label=f"Cutoff {f}Hz")
-            plt.legend()
+            for i in range(2):
+                if (plot_result == True):
+                        plt.figure(f"Audio Lowpass Filter Channel {i}",figsize=(15, 10))
+                        #raw audio
+                        # plt.subplot(2,1,1)
+                        plt.subplot(2,2,1)
+                        plt.grid(True)
+                        plt.plot(time,data[i],label = "Raw data")
+                        plt.legend()
+                        plt.xlabel("Time [s]")
+                        plt.ylabel("Amplitude")
+                        #filtered audio
+                        plt.subplot(2,2,3)
+                        plt.grid(True)
+                        plt.plot(time,filtered_audio[i],label = "Saved Audio")
+                        plt.xlabel("Time [s]")
+                        plt.ylabel("Amplitude")
+                        plt.legend()
 
 
-            plt.show()
+                        #fft raw
+                        # plt.subplot(2,1,2)
+                        plt.subplot(2,2,2)
+                        plt.grid(True)
+                        plt.plot(data_xfft[i],data_yfft[i],label = "FFT Raw data",color = 'green')
+                        plt.xlabel("Frequency [Hz]")
+                        plt.ylabel("Amplitude")
+                        for f in cutt_freq:
+                            plt.axvline(f, color='red', linestyle='--', label=f"Cutoff {f}Hz")
+                        plt.legend()
+
+                        #fft filtered audio
+                        plt.subplot(2,2,4)
+                        plt.grid(True)
+                        plt.plot(filtered_xfft[i],filtered_yfft[i],label = "FFT Filtered data",color ='green')
+                        plt.xlabel("Frequency [Hz]")
+                        plt.ylabel("Amplitude")
+                        for f in cutt_freq:
+                            plt.axvline(f, color='red', linestyle='--', label=f"Cutoff {f}Hz")
+                        plt.legend()
 
 
-        if (save_audio == True):
-            if output_file == "":
-                output_file = f"filtered_{input_file}_{filter_type}_{order}_{cutt_freq}Hz"
+                        plt.show()
+            print(2)
 
-            wavfile.write(output_file, samplerate, filtered_audio)
-            print(f"Saved '{output_file}'")
+            if (save_audio == True):
+                if output_file == "":
+                    output_file = f"filtered_{input_file}_{filter_type}_{order}_{cutt_freq}Hz"
+                file_to_write = np.array([filtered_audio[0],filtered_audio[1]]).T
+                wavfile.write(output_file, samplerate, file_to_write)
+                print(f"Saved '{output_file}'")
+
+        else:
+            print("Mono")
+            ndata = wav_data / np.max(np.abs(wav_data))
+            data = (ndata * 32767).astype(np.int16)
+
+            filtered = scipy.signal.sosfilt(sos, data)
+
+            normalized = filtered / np.max(np.abs(filtered))
+            filtered_audio = (normalized * 32767).astype(np.int16)
+
+            data_xfft, data_yfft = fft(data,samplerate)
+            filtered_xfft, filtered_yfft = fft(filtered_audio,samplerate)
+
+            if (plot_result == True):
+                plt.figure("Audio Lowpass Filter",figsize=(15, 10))
+                #raw audio
+                # plt.subplot(2,1,1)
+                plt.subplot(2,2,1)
+                plt.grid(True)
+                plt.plot(time,data,label = "Raw data")
+                plt.legend()
+                plt.xlabel("Time [s]")
+                plt.ylabel("Amplitude")
+                #filtered audio
+                plt.subplot(2,2,3)
+                plt.grid(True)
+                plt.plot(time,filtered_audio,label = "Saved Audio")
+                plt.xlabel("Time [s]")
+                plt.ylabel("Amplitude")
+                plt.legend()
+
+
+                #fft raw
+                # plt.subplot(2,1,2)
+                plt.subplot(2,2,2)
+                plt.grid(True)
+                plt.plot(data_xfft,data_yfft,label = "FFT Raw data",color = 'green')
+                plt.xlabel("Frequency [Hz]")
+                plt.ylabel("Amplitude")
+                for f in cutt_freq:
+                    plt.axvline(f, color='red', linestyle='--', label=f"Cutoff {f}Hz")
+                plt.legend()
+
+                #fft filtered audio
+                plt.subplot(2,2,4)
+                plt.grid(True)
+                plt.plot(filtered_xfft,filtered_yfft,label = "FFT Filtered data",color ='green')
+                plt.xlabel("Frequency [Hz]")
+                plt.ylabel("Amplitude")
+                for f in cutt_freq:
+                    plt.axvline(f, color='red', linestyle='--', label=f"Cutoff {f}Hz")
+                plt.legend()
+
+
+                plt.show()
+
+            if (save_audio == True):
+                if output_file == "":
+                    output_file = f"filtered_{input_file}_{filter_type}_{order}_{cutt_freq}Hz"
+
+                wavfile.write(output_file, samplerate, filtered_audio)
+                print(f"Saved '{output_file}'")
 
 
     except FileNotFoundError:
@@ -139,7 +219,6 @@ if __name__ == "__main__":
     parser.add_argument("--no-plot", action="store_false", dest="plot", help="Disable plotting (Enabled by default)")
     parser.add_argument("--no-save", action="store_false", dest="save", help="Disable saving file (Enabled by default)")
     parser.add_argument("-output_file",type=str,default="",help="The name of the output_file (if -save is True), Automatically genarated if is not specified")
-    
 
     args = parser.parse_args()
 
