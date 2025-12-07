@@ -16,7 +16,7 @@ Format Support: Handles Mono and Stereo WAV files.
 
 *Clone the repository:*
 
-git clone [https://github.com/alperx4w/audio-filtering-tool.git](https://github.com/alperx4w/audio-filtering-tool.git)
+git clone [https://github.com/alperx4w/wav-file-filtering](https://github.com/alperx4w/wav-file-filtering)
 
 cd audio-filtering-tool
 
